@@ -37,10 +37,7 @@ public class Order {
       for (OrderItem item : items) {
          Product product = item.getProduct();
          int quantity = item.getQuantity();
-         if (product.getStockQuantity() < quantity) {
-            throw new InsufficientStockException(product, quantity);
-         }
-         product.setStockQuantity(product.getStockQuantity() - quantity);
+         product.setStockQuantity(quantity);
       }
       status = OrderStatus.COMPLETED;
    }
@@ -48,7 +45,7 @@ public class Order {
    public void addProduct(OrderItem newItem) {
       items.add(newItem);
 
-      BigDecimal itemAmount = newItem.getProduct().getPrice().multiply(BigDecimal.valueOf(newItem.getQuantity()));
+      BigDecimal itemAmount = newItem.getProduct().getPriceMultiplyQuantity(newItem.getQuantity());
 
       totalAmount = totalAmount.add(itemAmount);
       discountAmount = calculateDiscount(totalAmount);
@@ -68,7 +65,7 @@ public class Order {
 
    private void calculateDeliveryCost() {
       double totalWeight = items.stream()
-              .mapToDouble(item -> item.getProduct().getWeight() * item.getQuantity())
+              .mapToDouble(item -> item.getProduct().getTotalWeight(item.getQuantity()))
               .sum();
 
       double deliveryTypeCost = deliveryType == DeliveryType.EXPRESS ? 30 : 15;
