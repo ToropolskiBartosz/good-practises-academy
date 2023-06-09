@@ -11,9 +11,6 @@ public class User {
     String name;
     String surname;
     LocalDate dateOfBirth;
-    String street;
-    String postalCode;
-    String city;
-    String country;
+    Address address;
 
 }

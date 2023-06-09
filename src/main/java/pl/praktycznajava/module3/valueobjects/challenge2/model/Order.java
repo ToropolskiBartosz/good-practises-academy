@@ -5,7 +5,6 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.experimental.FieldDefaults;
 
-import java.math.BigDecimal;
 import java.util.List;
 
 @Getter
@@ -14,12 +13,10 @@ import java.util.List;
 public class Order {
 
    List<OrderItem> items;
-   BigDecimal totalAmount;
-   Currency currency;
+   Price price;
 
-   public void changeTotalAmount(BigDecimal totalAmount, Currency currency) {
-      this.totalAmount = totalAmount;
-      this.currency = currency;
+   public void changeTotalPrice(Price price) {
+      this.price = price;
    }
 
 }

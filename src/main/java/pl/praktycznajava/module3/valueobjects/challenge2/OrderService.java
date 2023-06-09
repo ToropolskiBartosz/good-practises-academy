@@ -2,9 +2,9 @@ package pl.praktycznajava.module3.valueobjects.challenge2;
 
 import pl.praktycznajava.module3.valueobjects.challenge2.model.Currency;
 import pl.praktycznajava.module3.valueobjects.challenge2.model.Order;
+import pl.praktycznajava.module3.valueobjects.challenge2.model.Price;
 
 import java.math.BigDecimal;
-import java.math.RoundingMode;
 
 public class OrderService {
 
@@ -19,33 +19,28 @@ public class OrderService {
 
     public boolean hasFreeShipping(String orderId) {
         Order order = orderRepository.findBy(orderId);
-        BigDecimal totalAmount = order.getTotalAmount();
-        Currency currency = order.getCurrency();
-        if(currency != FREE_SHIPPING_THRESHOLD_CURRENCY) {
-            BigDecimal convertedAmount = currencyConverter.convertTo(totalAmount, currency, FREE_SHIPPING_THRESHOLD_CURRENCY);
-            return convertedAmount.compareTo(FREE_SHIPPING_THRESHOLD_AMOUNT) > 0;
+        Price price = order.getPrice();
+        if(price.getCurrency() != FREE_SHIPPING_THRESHOLD_CURRENCY) {
+            Price convertedCurrencyPrice = price.convertCurrency(currencyConverter, FREE_SHIPPING_THRESHOLD_CURRENCY);
+            return convertedCurrencyPrice.greaterThan(FREE_SHIPPING_THRESHOLD_AMOUNT);
         } else {
-            return totalAmount.compareTo(FREE_SHIPPING_THRESHOLD_AMOUNT) > 0;
+            return price.greaterThan(FREE_SHIPPING_THRESHOLD_AMOUNT);
         }
     }
 
     public void addDiscount(String orderId, BigDecimal discount, Currency discountCurrency) {
         Order order = orderRepository.findBy(orderId);
-        BigDecimal totalAmount = order.getTotalAmount();
-        Currency currency = order.getCurrency();
-        BigDecimal convertedAmount = currencyConverter.convertTo(discount, discountCurrency, currency);
-        BigDecimal discountedAmount = totalAmount.subtract(convertedAmount);
-        order.changeTotalAmount(discountedAmount, currency);
+        Price price = order.getPrice();
+        Price priceDiscounted = price.ofValueDiscount(currencyConverter, discount, discountCurrency);
+        order.changeTotalPrice(priceDiscounted);
         orderRepository.save(order);
     }
 
     public void addPercentageDiscount(String orderId, int percentageDiscount) {
         Order order = orderRepository.findBy(orderId);
-        BigDecimal totalAmount = order.getTotalAmount();
-        BigDecimal discountAmount = totalAmount.multiply(BigDecimal.valueOf(percentageDiscount))
-                .divide(BigDecimal.valueOf(MAX_PERCENT), RoundingMode.HALF_UP);
-        BigDecimal discountedAmount = totalAmount.subtract(discountAmount);
-        order.changeTotalAmount(discountedAmount, order.getCurrency());
+        Price price = order.getPrice();
+        Price pricePercentageDiscount = price.ofPercentageDiscount(percentageDiscount, MAX_PERCENT);
+        order.changeTotalPrice(pricePercentageDiscount);
         orderRepository.save(order);
     }
 
