@@ -8,9 +8,8 @@ import java.math.BigDecimal;
 
 public class OrderService {
 
-    public static final Currency FREE_SHIPPING_THRESHOLD_CURRENCY = Currency.USD;
-    public static final BigDecimal FREE_SHIPPING_THRESHOLD_AMOUNT = BigDecimal.valueOf(100);
-    public static final int MAX_PERCENT = 100;
+    public static final Price FREE_SHIPPING_THRESHOLD = Price.of(BigDecimal.valueOf(100), Currency.USD);
+
     OrderRepository orderRepository;
     CurrencyConverter currencyConverter;
 
@@ -20,18 +19,14 @@ public class OrderService {
     public boolean hasFreeShipping(String orderId) {
         Order order = orderRepository.findBy(orderId);
         Price price = order.getPrice();
-        if(price.getCurrency() != FREE_SHIPPING_THRESHOLD_CURRENCY) {
-            Price convertedCurrencyPrice = price.convertCurrency(currencyConverter, FREE_SHIPPING_THRESHOLD_CURRENCY);
-            return convertedCurrencyPrice.greaterThan(FREE_SHIPPING_THRESHOLD_AMOUNT);
-        } else {
-            return price.greaterThan(FREE_SHIPPING_THRESHOLD_AMOUNT);
-        }
+        return price.greaterThan(FREE_SHIPPING_THRESHOLD, currencyConverter);
     }
 
     public void addDiscount(String orderId, BigDecimal discount, Currency discountCurrency) {
         Order order = orderRepository.findBy(orderId);
         Price price = order.getPrice();
-        Price priceDiscounted = price.ofValueDiscount(currencyConverter, discount, discountCurrency);
+        Price discountPrice = Price.of(discount, discountCurrency);
+        Price priceDiscounted = price.subtract(discountPrice, currencyConverter);
         order.changeTotalPrice(priceDiscounted);
         orderRepository.save(order);
     }
@@ -39,7 +34,7 @@ public class OrderService {
     public void addPercentageDiscount(String orderId, int percentageDiscount) {
         Order order = orderRepository.findBy(orderId);
         Price price = order.getPrice();
-        Price pricePercentageDiscount = price.ofPercentageDiscount(percentageDiscount, MAX_PERCENT);
+        Price pricePercentageDiscount = price.subtractPercentageDiscount(percentageDiscount);
         order.changeTotalPrice(pricePercentageDiscount);
         orderRepository.save(order);
     }

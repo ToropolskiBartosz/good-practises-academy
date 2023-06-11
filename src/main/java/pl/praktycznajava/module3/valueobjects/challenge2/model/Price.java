@@ -8,6 +8,8 @@ import java.math.RoundingMode;
 
 @Value
 public class Price {
+    public static final int MAX_PERCENT = 100;
+
     BigDecimal totalAmount;
     Currency currency;
 
@@ -31,21 +33,30 @@ public class Price {
         return Price.of(convertAmount, currency);
     }
 
-    public Price ofValueDiscount(CurrencyConverter currencyConverter, BigDecimal discount, Currency discountCurrency) {
-        BigDecimal convertedDiscountedAmount = currencyConverter.convertTo(discount, discountCurrency, this.currency);
-        return ofValueDiscount(convertedDiscountedAmount);
+    public Price subtract(Price discount, CurrencyConverter currencyConverter) {
+        BigDecimal convertedDiscountedAmount = currencyConverter.convertTo(discount.getTotalAmount(), discount.getCurrency(), this.currency);
+        return subtract(convertedDiscountedAmount);
     }
 
-    public Price ofValueDiscount(BigDecimal discountedAmount) {
+    public Price subtract(BigDecimal discountedAmount) {
         BigDecimal discount = totalAmount.subtract(discountedAmount);
         return Price.of(discount, this.currency);
     }
 
-    public Price ofPercentageDiscount(int percentageDiscount, int maxPercent) {
+    public Price subtractPercentageDiscount(int percentageDiscount) {
         BigDecimal percentageDiscountAmount = totalAmount.multiply(BigDecimal.valueOf(percentageDiscount))
-                .divide(BigDecimal.valueOf(maxPercent), RoundingMode.HALF_UP);
+                .divide(BigDecimal.valueOf(MAX_PERCENT), RoundingMode.HALF_UP);
         BigDecimal discountedAmount = totalAmount.subtract(percentageDiscountAmount);
         return Price.of(discountedAmount, this.currency);
+    }
+
+    public boolean greaterThan(Price price, CurrencyConverter currencyConverter) {
+        if(currency != price.getCurrency()) {
+            Price convertedCurrencyPrice = convertCurrency(currencyConverter, price.getCurrency());
+            return convertedCurrencyPrice.greaterThan(price.getTotalAmount());
+        } else {
+            return greaterThan(price.getTotalAmount());
+        }
     }
 
     public boolean greaterThan(BigDecimal amount) {
