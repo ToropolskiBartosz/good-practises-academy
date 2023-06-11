@@ -37,7 +37,7 @@ public class Order {
       for (OrderItem item : items) {
          Product product = item.getProduct();
          int quantity = item.getQuantity();
-         product.setStockQuantity(quantity);
+         product.subtractFromStockQuantity(quantity);
       }
       status = OrderStatus.COMPLETED;
    }
@@ -45,7 +45,7 @@ public class Order {
    public void addProduct(OrderItem newItem) {
       items.add(newItem);
 
-      BigDecimal itemAmount = newItem.getProduct().getPriceMultiplyQuantity(newItem.getQuantity());
+      BigDecimal itemAmount = newItem.getOrderItemPrice();
 
       totalAmount = totalAmount.add(itemAmount);
       discountAmount = calculateDiscount(totalAmount);
@@ -65,7 +65,7 @@ public class Order {
 
    private void calculateDeliveryCost() {
       double totalWeight = items.stream()
-              .mapToDouble(item -> item.getProduct().getTotalWeight(item.getQuantity()))
+              .mapToDouble(OrderItem::getTotalWeightProduct)
               .sum();
 
       double deliveryTypeCost = deliveryType == DeliveryType.EXPRESS ? 30 : 15;
